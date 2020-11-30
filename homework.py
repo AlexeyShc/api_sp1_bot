@@ -66,7 +66,7 @@ def main():
             elif new_homework.get('message'):
                 code = new_homework.get('code', '')
                 message = new_homework['message']
-                logging.exception(f'Попытка обращения к серверу содержит оишбку{code}. {message}.')
+                logging.exception(f'Попытка обращения к серверу содержит оишбку {code}. {message}.')
             current_timestamp = new_homework.get('current_date', current_timestamp)
             time.sleep(900)
 
