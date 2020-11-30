@@ -40,7 +40,6 @@ def get_homework_statuses(current_time):
         homework_statuses = requests.get(URL_API_PRAKTIKUM, headers=HEADERS, params=params)
         return homework_statuses.json()
     except (ConnectionError, TimeoutError, ValueError) as e:
-        logging.exception(e)
         error = {
             'message': e
         }
