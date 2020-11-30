@@ -61,7 +61,7 @@ def main():
                 send_message(parse_homework_status(new_homework.get('homeworks')[0]), bot_client)
             elif new_homework.get('error'):
                 code = new_homework.get('code', '')
-                error = new_homework.get('error'['error'], '')
+                error = new_homework['error']['error']
                 logging.exception(f'Попытка обращения к серверу содержит ошибку {code}. {error}.')
             elif new_homework.get('message'):
                 code = new_homework.get('code', '')
