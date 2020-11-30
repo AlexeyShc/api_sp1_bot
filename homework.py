@@ -18,10 +18,10 @@ URL_API_PRAKTIKUM = 'https://praktikum.yandex.ru/api/user_api/homework_statuses/
 
 
 def parse_homework_status(homework):
-    homework_name = 'Непредвиденное имя работы'
-    if homework.get('homework_name') is not None:
-        homework_name = homework['homework_name']
-    verdict = 'Непредвиденный статус работы'
+    homework_name = homework.get('homework_name', 'Но ее название отсутсвует в ответе от сервера')
+    if homework_name is None:
+        homework_name = 'Но ее название оказалось пустым'
+    verdict = 'Статус работы оказался непредусмотрен'
     if homework.get('status'):
         status = homework['status']
         if status == 'rejected':
@@ -41,7 +41,10 @@ def get_homework_statuses(current_time):
         return homework_statuses.json()
     except (ConnectionError, TimeoutError, ValueError) as e:
         logging.exception(e)
-        return 'Произошла ошибка при обращении к API'
+        error = {
+            'message': e
+        }
+        return error
 
 
 def send_message(message, bot_client):
@@ -56,6 +59,14 @@ def main():
             new_homework = get_homework_statuses(current_timestamp)
             if new_homework.get('homeworks'):
                 send_message(parse_homework_status(new_homework.get('homeworks')[0]), bot_client)
+            elif new_homework.get('error'):
+                code = new_homework.get('code', '')
+                error = new_homework['error']['error']
+                logging.exception(f'Попытка обращения к серверу содержит ошибку {code}. {error}.')
+            elif new_homework.get('message'):
+                code = new_homework.get('code', '')
+                message = new_homework['message']
+                logging.exception(f'Попытка обращения к серверу содержит оишбку{code}. {message}.')
             current_timestamp = new_homework.get('current_date', current_timestamp)
             time.sleep(900)
 
