@@ -18,29 +18,30 @@ URL_API_PRAKTIKUM = 'https://praktikum.yandex.ru/api/user_api/homework_statuses/
 
 
 def parse_homework_status(homework):
-    if 'homework_name' and 'status' in homework:
+    homework_name = 'Непредвиденное имя работы'
+    if homework.get('homework_name') is not None:
         homework_name = homework['homework_name']
+    verdict = 'Непредвиденный статус работы'
+    if homework.get('status'):
         status = homework['status']
-        if status != 'rejected' or 'approved':
-            verdict = 'Непредвиденный статус работы'
         if status == 'rejected':
             verdict = 'К сожалению в работе нашлись ошибки.'
-        if status == 'approved':
+        elif status == 'approved':
             verdict = 'Ревьюеру всё понравилось, можно приступать к следующему уроку.'
-        return f'У вас проверили работу "{homework_name}"!\n\n{verdict}'
+    return f'У вас проверили работу "{homework_name}"!\n\n{verdict}'
 
 
-def get_homework_statuses(current_timestamp):
-    if current_timestamp is None:
-        current_timestamp = int(time.time())
+def get_homework_statuses(current_time):
+    current_time = int(time.time()) if current_time is None else current_time
     params = {
-        'from_date': current_timestamp,
+        'from_date': current_time,
     }
     try:
         homework_statuses = requests.get(URL_API_PRAKTIKUM, headers=HEADERS, params=params)
         return homework_statuses.json()
     except (ConnectionError, TimeoutError, ValueError) as e:
         logging.exception(e)
+        return 'Произошла ошибка при обращении к API'
 
 
 def send_message(message, bot_client):
@@ -49,7 +50,7 @@ def send_message(message, bot_client):
 
 def main():
     bot_client = telegram.Bot(token=TELEGRAM_TOKEN)
-    current_timestamp = int(time.time())
+    current_timestamp = 0
     while True:
         try:
             new_homework = get_homework_statuses(current_timestamp)
@@ -60,6 +61,7 @@ def main():
 
         except Exception as e:
             print(f'Бот столкнулся с ошибкой: {e}')
+            logging.exception(e)
             time.sleep(5)
 
 
