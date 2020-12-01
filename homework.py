@@ -42,9 +42,9 @@ def get_homework_statuses(current_time):
     except (ConnectionError, TimeoutError, ValueError) as e:
         error_form = {
             'error': {
-                'error': e
-            }
-            'code': 'Unknown code'
+                'error': e,
+            },
+            'code': 'Unknown code',
         }
         return error_form
 
