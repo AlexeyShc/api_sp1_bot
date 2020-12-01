@@ -18,21 +18,21 @@ URL_API_PRAKTIKUM = 'https://praktikum.yandex.ru/api/user_api/homework_statuses/
 
 
 def parse_homework_status(homework):
-    homework_name = homework.get('homework_name', None)
+    homework_name = homework.get('homework_name')
     if homework_name is None:
-        homework_name = 'Но ее название отсутствует в ответе от сервера'
-    status = homework.get('status', None)
+        return 'У вас проверили работу, но ее название отсутсвует в ответе от сервера'
+    status = homework.get('status')
     if status == 'rejected':
         verdict = 'К сожалению в работе нашлись ошибки.'
     elif status == 'approved':
         verdict = 'Ревьюеру всё понравилось, можно приступать к следующему уроку.'
     else:
-        verdict = 'Статус работы оказался непредусмотрен'
+        return 'У вас проверили работу, но статус работы оказался непредусмотрен'
     return f'У вас проверили работу "{homework_name}"!\n\n{verdict}'
 
 
 def get_homework_statuses(current_time):
-    current_time = int(time.time()) if current_time is None else current_time
+    current_time = current_time or int(time.time())
     params = {
         'from_date': current_time,
     }
@@ -40,13 +40,8 @@ def get_homework_statuses(current_time):
         homework_statuses = requests.get(URL_API_PRAKTIKUM, headers=HEADERS, params=params)
         return homework_statuses.json()
     except (ConnectionError, TimeoutError, ValueError) as e:
-        error_form = {
-            'error': {
-                'error': e,
-            },
-            'code': 'Unknown code',
-        }
-        return error_form
+        logging.exception(e)
+        return {}
 
 
 def send_message(message, bot_client):
@@ -61,14 +56,6 @@ def main():
             new_homework = get_homework_statuses(current_timestamp)
             if new_homework.get('homeworks'):
                 send_message(parse_homework_status(new_homework.get('homeworks')[0]), bot_client)
-            elif new_homework.get('error'):
-                code = new_homework.get('code', 'Unknown code')
-                error = new_homework['error']['error']
-                logging.exception(f'Попытка обращения к серверу содержит ошибку {code}. {error}.')
-            elif new_homework.get('message'):
-                code = new_homework.get('code', 'Unknown code')
-                message = new_homework['message']
-                logging.exception(f'Попытка обращения к серверу содержит ошибку {code}. {message}.')
             current_timestamp = new_homework.get('current_date', current_timestamp)
             time.sleep(900)
 
