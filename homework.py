@@ -40,10 +40,13 @@ def get_homework_statuses(current_time):
         homework_statuses = requests.get(URL_API_PRAKTIKUM, headers=HEADERS, params=params)
         return homework_statuses.json()
     except (ConnectionError, TimeoutError, ValueError) as e:
-        error = {
-            'message': e
+        error_form = {
+            'error': {
+                'error': e
+            }
+            'code': 'Unknown code'
         }
-        return error
+        return error_form
 
 
 def send_message(message, bot_client):
@@ -59,11 +62,11 @@ def main():
             if new_homework.get('homeworks'):
                 send_message(parse_homework_status(new_homework.get('homeworks')[0]), bot_client)
             elif new_homework.get('error'):
-                code = new_homework.get('code', '')
+                code = new_homework.get('code', 'Unknown code')
                 error = new_homework['error']['error']
                 logging.exception(f'Попытка обращения к серверу содержит ошибку {code}. {error}.')
             elif new_homework.get('message'):
-                code = new_homework.get('code', '')
+                code = new_homework.get('code', 'Unknown code')
                 message = new_homework['message']
                 logging.exception(f'Попытка обращения к серверу содержит ошибку {code}. {message}.')
             current_timestamp = new_homework.get('current_date', current_timestamp)
